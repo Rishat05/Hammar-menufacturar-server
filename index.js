@@ -130,6 +130,19 @@ async function run() {
             res.send(result);
         });
 
+        app.post('/allusers/makeadmin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const query = req.body;
+            const filter = { email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: { ...query, role: 'admin' }
+            };
+            const result1 = await userCollection.updateOne(filter, updateDoc, option);
+            const result = await adminCollection.insertOne(query);
+            res.send(result);
+        })
+
     }
 
     finally {
