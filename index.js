@@ -36,6 +36,7 @@ async function run() {
         const serviceCollection = client.db('hammerMenufacturer').collection('tools');
         const bookingCollection = client.db('hammerMenufacturer').collection('bookings');
         const userCollection = client.db("hammerMenufacturer").collection("users");
+        const adminCollection = client.db("hammerMenufacturer").collection("admin");
 
         app.get('/tools', async (req, res) => {
             const query = {};
@@ -116,6 +117,18 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/allusers', async (req, res) => {
+            const query = {};
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+        });
+
+        app.delete('/allusers/dlt/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const result = userCollection.deleteOne(query);
+            res.send(result);
+        });
 
     }
 
