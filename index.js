@@ -36,7 +36,7 @@ async function run() {
         const serviceCollection = client.db('hammerMenufacturer').collection('tools');
         const bookingCollection = client.db('hammerMenufacturer').collection('bookings');
         const userCollection = client.db("hammerMenufacturer").collection("users");
-        const adminCollection = client.db("hammerMenufacturer").collection("admin");
+        // const adminCollection = client.db("hammerMenufacturer").collection("admin");
 
         app.get('/tools', async (req, res) => {
             const query = {};
@@ -45,17 +45,17 @@ async function run() {
             res.send(services);
         });
 
-        // app.post('/login', async (req, res) => {
-        //     const email = req.body;
-        //     const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET);
-        //     res.send({ token });
-        // });
-
         app.get('/tools/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const item = await serviceCollection.findOne(query);
             res.send(item);
+        });
+
+        app.post('/tools', verifyJWT, async (req, res) => {
+            const query = req.body;
+            const result = await serviceCollection.insertOne(query);
+            res.send(result);
         });
 
         app.post('/booking', verifyJWT, async (req, res) => {
@@ -130,17 +130,30 @@ async function run() {
             res.send(result);
         });
 
-        app.post('/allusers/makeadmin/:email', verifyJWT, async (req, res) => {
+        app.put('/allusers/makeadmin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
-            const query = req.body;
-            const filter = { email };
-            const option = { upsert: true };
-            const updateDoc = {
-                $set: { ...query, role: 'admin' }
-            };
-            const result1 = await userCollection.updateOne(filter, updateDoc, option);
-            const result = await adminCollection.insertOne(query);
-            res.send(result);
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            }
+
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+
+        });
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+            // res.send(user);
         })
 
     }
