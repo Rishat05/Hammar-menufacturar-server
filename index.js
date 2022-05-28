@@ -52,6 +52,13 @@ async function run() {
             res.send(item);
         });
 
+        app.delete('/tools/dlt/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await serviceCollection.deleteOne(query);
+            res.send(result);
+        });
+
         app.post('/tools', verifyJWT, async (req, res) => {
             const query = req.body;
             const result = await serviceCollection.insertOne(query);
