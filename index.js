@@ -35,6 +35,7 @@ async function run() {
         await client.connect();
         const serviceCollection = client.db('hammerMenufacturer').collection('tools');
         const bookingCollection = client.db('hammerMenufacturer').collection('bookings');
+        const userCollection = client.db("hammerMenufacturer").collection("users");
 
         app.get('/tools', async (req, res) => {
             const query = {};
@@ -43,11 +44,11 @@ async function run() {
             res.send(services);
         });
 
-        app.post('/login', async (req, res) => {
-            const email = req.body;
-            const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET);
-            res.send({ token });
-        });
+        // app.post('/login', async (req, res) => {
+        //     const email = req.body;
+        //     const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET);
+        //     res.send({ token });
+        // });
 
         app.get('/tools/:id', async (req, res) => {
             const id = req.params.id;
@@ -61,7 +62,7 @@ async function run() {
             const result = await bookingCollection.insertOne(booking);
             res.send(result);
         });
-        //use korini 
+        // no use 
         app.get('/booking', async (req, res) => {
             const query = {};
             const cursor = bookingCollection.find(query);
@@ -81,7 +82,40 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await bookingCollection.deleteOne(query);
             res.send(result);
+        });
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
+            res.send({ result, token });
+        });
+
+        app.put('/userupdate/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
         })
+
+        app.get('/userprofile/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        });
+
 
     }
 
