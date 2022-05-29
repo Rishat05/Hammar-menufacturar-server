@@ -36,7 +36,7 @@ async function run() {
         const serviceCollection = client.db('hammerMenufacturer').collection('tools');
         const bookingCollection = client.db('hammerMenufacturer').collection('bookings');
         const userCollection = client.db("hammerMenufacturer").collection("users");
-        // const adminCollection = client.db("hammerMenufacturer").collection("admin");
+        const reviewCollection = client.db("hammerMenufacturer").collection("review");
 
         app.get('/tools', async (req, res) => {
             const query = {};
@@ -63,6 +63,20 @@ async function run() {
             const query = req.body;
             const result = await serviceCollection.insertOne(query);
             res.send(result);
+        });
+
+        // review add
+        app.post('/review', verifyJWT, async (req, res) => {
+            const query = req.body;
+            const result = await reviewCollection.insertOne(query);
+            res.send(result);
+        });
+
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const services = await cursor.toArray();
+            res.send(services);
         });
 
         app.post('/booking', verifyJWT, async (req, res) => {
