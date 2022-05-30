@@ -5,7 +5,7 @@ var jwt = require('jsonwebtoken');
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
-
+const strip = require('stripe')(process.env.STRIPE_API_KEY);
 
 //middleware
 app.use(cors());
@@ -92,6 +92,13 @@ async function run() {
             res.send(services);
         });
 
+        app.get('/booking/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const item = await bookingCollection.findOne(query);
+            res.send(item);
+        });
+
         app.get('/booking/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { email };
@@ -175,6 +182,17 @@ async function run() {
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin });
             // res.send(user);
+        });
+
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const { price } = req.body;
+            const paymentIntent = await Stripe.paymentIntents.create({
+                amount: price,
+                currency: 'usd',
+                payment_method_types: ['card']
+
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
         })
 
     }
