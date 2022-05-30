@@ -5,7 +5,7 @@ var jwt = require('jsonwebtoken');
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
-const strip = require('stripe')(process.env.STRIPE_API_KEY);
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 
 //middleware
 app.use(cors());
@@ -186,13 +186,28 @@ async function run() {
 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const { price } = req.body;
-            const paymentIntent = await Stripe.paymentIntents.create({
+            const paymentIntent = await stripe.paymentIntents.create({
                 amount: price,
                 currency: 'usd',
                 payment_method_types: ['card']
 
             });
             res.send({ clientSecret: paymentIntent.client_secret });
+        });
+
+        app.put('/booking/makepayment/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const userpayment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    payment: 'paid',
+                    transactionId: userpayment.transactionId
+                }
+            }
+            const result = await bookingCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
         })
 
     }
