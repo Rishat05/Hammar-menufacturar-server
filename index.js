@@ -98,18 +98,18 @@ async function run() {
             res.send(services);
         });
 
-        app.get('/booking/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const item = await bookingCollection.findOne(query);
-            res.send(item);
-        });
-
-        app.get('/booking/:email', verifyJWT, async (req, res) => {
+        app.get('/booking/email/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email };
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
+        });
+
+        app.get('/booking/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const item = await bookingCollection.findOne(query);
+            res.send(item);
         });
 
         app.delete('/booking/dlt/:id', verifyJWT, async (req, res) => {
